@@ -71,13 +71,17 @@ def trainer_synapse(args, model, snapshot_path):
         for i_batch, sampled_batch in enumerate(trainloader):
             image_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
-            o_f = model(image_batch)
+            o_f, mask, loss_eu, loss_bce = model(image_batch, label_batch)
             torch.cuda.empty_cache()
             loss_ce = ce_loss(o_f, label_batch[:].long())
             loss_dice = dice_loss(o_f, label_batch, softmax=True)
-            train_loss_f += 0.5 * loss_ce.item() + 0.5 * loss_dice.item()
+            
+            loss_ce_c = ce_loss(o_f, label_batch[:].long())
+            loss_dice_c = dice_loss(o_f, label_batch, softmax=True)
+            
+            train_loss_f += 0.5 * loss_ce.item() + 0.5 * loss_dice.item() + (loss_ce_c.item() + loss_dice_c.item()) * 0.15 + loss_bce.item() * 0.7 + loss_eu.item() * 0.7
 
-            loss = 0.5 * loss_ce + 0.5 * loss_dice
+            loss = 0.5 * loss_ce + 0.5 * loss_dice + (loss_ce_c + loss_dice_c) * 0.15 + loss_bce * 0.7 + loss_eu * 0.7
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
