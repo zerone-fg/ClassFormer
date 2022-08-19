@@ -422,7 +422,7 @@ class ClassFormer(nn.Module):
         if self.training:
             return feature_out, Euclidean_loss, loss_bce / self.num_classes, out_c
         else:
-            return feature_out, None, None, None
+            return feature_out
 
 
 # if __name__ == "__main__":
